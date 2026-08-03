@@ -33,7 +33,7 @@ mq -I raw 'import "github.com/harehare/sparkline.mq" | sparkline::sparkline' dat
 Pin to a specific release with `@vX.Y.Z`:
 
 ```sh
-mq -I raw 'import "github.com/harehare/sparkline.mq@v1.0.0" | sparkline::sparkline' data.json
+mq -I raw 'import "github.com/harehare/sparkline.mq@v0.1.0" | sparkline::sparkline' data.json
 ```
 
 ## Usage
