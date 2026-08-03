@@ -1,0 +1,54 @@
+# A pure Unicode sparkline renderer implemented in mq.
+# Converts a numeric array into a compact `▁▂▃▄▅▆▇█` string, min-max normalized
+# so it can be embedded directly in Markdown output (e.g. "last 7 days of commits").
+
+def _spark_ticks(): ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
+
+# Maps a single value to a tick index in [0, ticks_len - 1] via min-max
+# normalization against `lo`/`hi`. When `lo == hi` (a flat series), every
+# value maps to the middle tick.
+def _spark_level(value, lo, hi, ticks_len):
+  if (hi == lo):
+    floor(ticks_len / 2)
+  else:
+    do
+      let ratio = (value - lo) / (hi - lo)
+      | let idx = floor(ratio * (ticks_len - 1) + 0.5)
+      | min(max(idx, 0), ticks_len - 1)
+    end
+end
+
+# Converts an array of numbers into a Unicode sparkline string, one tick
+# character (`▁▂▃▄▅▆▇█`) per element.
+#
+# Values are min-max normalized across the whole array, so only the relative
+# shape of the series is preserved, not its absolute magnitude. Edge cases:
+#
+# - Empty array: returns `""`.
+# - Single value, or all values equal: every tick is the middle character (`▅`).
+# - Negative numbers: normalized the same as positive numbers, since min-max
+#   normalization is shift-invariant.
+#
+# Raises an error if any element is not a number.
+#
+# Example:
+# ```
+# sparkline([1, 5, 2, 8, 3, 9, 1, 7])
+# #=> "▁▅▂▇▃█▁▆"
+# ```
+def sparkline(numbers):
+  if (is_empty(numbers)):
+    ""
+  else:
+    do
+      let has_invalid = fold(numbers, false, fn(acc, n): acc || !is_number(n);)
+      | let _ = if (has_invalid):
+                  error("sparkline: all elements must be numbers")
+                else:
+                  None
+      | let ticks = _spark_ticks()
+      | let lo = min_by(numbers, fn(x): x;)
+      | let hi = max_by(numbers, fn(x): x;)
+      | join(map(numbers, fn(n): ticks[_spark_level(n, lo, hi, len(ticks))];), "")
+    end
+end
